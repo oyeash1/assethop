@@ -11,15 +11,19 @@ const hashToken = (token) => {
 
 class AuthService {
 
-    async registerUser(name, email, password, role, userAgent = '', ipAddress = '') {
+    async registerUser(name, email, password, role, phoneNumber, userAgent = '', ipAddress = '') {
         const existingUser = await User.findOne({ email });
         if (existingUser) throw new Error('Email already registered.');
+
+        const existingPhone = await User.findOne({ phoneNumber });
+        if (existingPhone) throw new Error('Phone number already registered.');
 
         const encryptedPassword = await hashPassword(password);
 
         const user = await User.create({
             name,
             email,
+            phoneNumber,
             password: encryptedPassword,
             role
         });
@@ -38,7 +42,7 @@ class AuthService {
         });
 
         return {
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, profileImage: user.profileImage || '' },
+            user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' },
             accessToken,
             refreshToken
         };
@@ -66,7 +70,7 @@ class AuthService {
         });
 
         return {
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, profileImage: user.profileImage || '' },
+            user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' },
             accessToken,
             refreshToken
         };
@@ -79,7 +83,7 @@ class AuthService {
             { new: true }
         );
         if (!user) throw new Error('User not found.');
-        return { id: user._id, name: user.name, email: user.email, role: user.role, profileImage: user.profileImage || '' };
+        return { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' };
     }
 }
 

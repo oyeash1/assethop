@@ -44,15 +44,33 @@ class AuthController {
 
     async signup(req, res) {
         try {
-            const { name, email, password, role } = req.body;
-            if (!name || !email || !password) {
+            const { name, email, password, role, phoneNumber } = req.body;
+            if (!name || !email || !password || !phoneNumber) {
                 return res.status(400).json({ status: 'error', message: 'All fields are required.' });
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ status: 'error', message: 'Please provide a valid email address.' });
+            }
+
+            const phoneRegex = /^[0-9]{10}$/;
+            if (!phoneRegex.test(phoneNumber)) {
+                return res.status(400).json({ status: 'error', message: 'Phone number must be a valid 10-digit number.' });
+            }
+
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+            if (!passwordRegex.test(password)) {
+                return res.status(400).json({ 
+                    status: 'error', 
+                    message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' 
+                });
             }
 
             const userAgent = req.headers['user-agent'] || '';
             const ipAddress = req.ip || '';
 
-            const result = await authService.registerUser(name, email, password, role, userAgent, ipAddress);
+            const result = await authService.registerUser(name, email, password, role, phoneNumber, userAgent, ipAddress);
             
             setTokenCookies(res, result.accessToken, result.refreshToken);
 
@@ -150,7 +168,7 @@ class AuthController {
             return res.status(200).json({
                 status: 'success',
                 data: {
-                    user: { id: user._id, name: user.name, email: user.email, role: user.role, profileImage: user.profileImage || '' }
+                    user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' }
                 }
             });
         } catch (error) {
@@ -191,6 +209,7 @@ class AuthController {
                         id: user._id,
                         name: user.name,
                         email: user.email,
+                        phoneNumber: user.phoneNumber,
                         role: user.role,
                         profileImage: user.profileImage || ''
                     }
