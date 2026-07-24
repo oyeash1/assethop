@@ -4,12 +4,12 @@ const multer = require('multer');
 // Configure memory storage
 const storage = multer.memoryStorage();
 
-// File filter to ensure only images are uploaded
+// File filter to ensure only images and PDF files are allowed
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
         cb(null, true);
     } else {
-        cb(new Error('Only image files are allowed!'), false);
+        cb(new Error('Only image and PDF files are allowed!'), false);
     }
 };
 

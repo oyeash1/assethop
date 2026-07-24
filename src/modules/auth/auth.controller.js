@@ -109,9 +109,25 @@ class AuthController {
     async updateProfile(req, res) {
         try {
             const userId = req.user.id;
-            const { name, email, profileImage } = req.body;
+            const { name, phoneNumber, profileImage } = req.body;
 
-            const updatedUser = await authService.updateProfile(userId, { name, email, profileImage });
+            const updateData = {};
+            if (name !== undefined) updateData.name = name;
+            if (profileImage !== undefined) updateData.profileImage = profileImage;
+            
+            if (phoneNumber !== undefined) {
+                const phoneRegex = /^[0-9]{10}$/;
+                if (!phoneRegex.test(phoneNumber)) {
+                    return res.status(400).json({ status: 'error', message: 'Phone number must be a valid 10-digit number.' });
+                }
+                const existingPhone = await User.findOne({ phoneNumber, _id: { $ne: userId } });
+                if (existingPhone) {
+                    return res.status(400).json({ status: 'error', message: 'Phone number is already registered by another user.' });
+                }
+                updateData.phoneNumber = phoneNumber;
+            }
+
+            const updatedUser = await authService.updateProfile(userId, updateData);
             return res.status(200).json({
                 status: 'success',
                 message: 'Profile updated successfully!',
@@ -168,7 +184,16 @@ class AuthController {
             return res.status(200).json({
                 status: 'success',
                 data: {
-                    user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' }
+                    user: { 
+                        id: user._id, 
+                        name: user.name, 
+                        email: user.email, 
+                        phoneNumber: user.phoneNumber, 
+                        role: user.role, 
+                        profileImage: user.profileImage || '',
+                        kycStatus: user.kycStatus || 'NOT_SUBMITTED',
+                        kycDetails: user.kycDetails || {}
+                    }
                 }
             });
         } catch (error) {
@@ -211,12 +236,60 @@ class AuthController {
                         email: user.email,
                         phoneNumber: user.phoneNumber,
                         role: user.role,
-                        profileImage: user.profileImage || ''
+                        profileImage: user.profileImage || '',
+                        kycStatus: user.kycStatus || 'NOT_SUBMITTED',
+                        kycDetails: user.kycDetails || {}
                     }
                 }
             });
         } catch (error) {
             return res.status(400).json({ status: 'error', message: error.message });
+        }
+    }
+    async submitKyc(req, res) {
+        try {
+            const userId = req.user.id;
+            const { 
+                aadharNumber, 
+                aadharFile, 
+                panNumber, 
+                panFile, 
+                otherDocType, 
+                otherDocNumber, 
+                otherDocFile 
+            } = req.body;
+
+            if (!aadharNumber || !aadharFile || !panNumber || !panFile) {
+                return res.status(400).json({ status: 'error', message: 'Aadhar Card and PAN Card details are required for KYC.' });
+            }
+
+            const aadharRegex = /^\d{12}$/;
+            if (!aadharRegex.test(aadharNumber)) {
+                return res.status(400).json({ status: 'error', message: 'Aadhar Number must be a valid 12-digit number.' });
+            }
+
+            const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i;
+            if (!panRegex.test(panNumber)) {
+                return res.status(400).json({ status: 'error', message: 'PAN Number must be a valid 10-character alphanumeric code.' });
+            }
+
+            const updatedUser = await authService.submitKyc(userId, {
+                aadharNumber,
+                aadharFile,
+                panNumber,
+                panFile,
+                otherDocType,
+                otherDocNumber,
+                otherDocFile
+            });
+
+            return res.status(200).json({
+                status: 'success',
+                message: 'KYC documents submitted successfully!',
+                data: updatedUser
+            });
+        } catch (error) {
+            return res.status(500).json({ status: 'error', message: error.message });
         }
     }
 }

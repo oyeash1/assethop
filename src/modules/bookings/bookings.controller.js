@@ -1,5 +1,6 @@
 // src/modules/bookings/bookings.controller.js
 const bookingsService = require('./bookings.service');
+const User = require('../auth/user.model');
 
 class BookingsController {
 
@@ -8,6 +9,12 @@ class BookingsController {
         try {
             const { listingId, startDate, endDate } = req.body;
             const userId = req.user.id; // Coming directly from our secure authenticateUser middleware
+
+            // Enforce KYC verification
+            const renterUser = await User.findById(userId);
+            if (!renterUser || renterUser.kycStatus !== 'VERIFIED') {
+                return res.status(403).json({ status: 'error', message: 'KYC verification is required to rent products.' });
+            }
 
             if (!listingId || !startDate || !endDate) {
                 return res.status(400).json({ status: 'error', message: 'Missing core booking details.' });

@@ -42,7 +42,16 @@ class AuthService {
         });
 
         return {
-            user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' },
+            user: { 
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                phoneNumber: user.phoneNumber, 
+                role: user.role, 
+                profileImage: user.profileImage || '',
+                kycStatus: user.kycStatus || 'NOT_SUBMITTED',
+                kycDetails: user.kycDetails || {}
+            },
             accessToken,
             refreshToken
         };
@@ -70,7 +79,16 @@ class AuthService {
         });
 
         return {
-            user: { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' },
+            user: { 
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                phoneNumber: user.phoneNumber, 
+                role: user.role, 
+                profileImage: user.profileImage || '',
+                kycStatus: user.kycStatus || 'NOT_SUBMITTED',
+                kycDetails: user.kycDetails || {}
+            },
             accessToken,
             refreshToken
         };
@@ -83,7 +101,45 @@ class AuthService {
             { new: true }
         );
         if (!user) throw new Error('User not found.');
-        return { id: user._id, name: user.name, email: user.email, phoneNumber: user.phoneNumber, role: user.role, profileImage: user.profileImage || '' };
+        return { 
+            id: user._id, 
+            name: user.name, 
+            email: user.email, 
+            phoneNumber: user.phoneNumber, 
+            role: user.role, 
+            profileImage: user.profileImage || '',
+            kycStatus: user.kycStatus || 'NOT_SUBMITTED',
+            kycDetails: user.kycDetails || {}
+        };
+    }
+
+    async submitKyc(userId, kycDetailsData) {
+        const user = await User.findById(userId);
+        if (!user) throw new Error('User not found.');
+
+        user.kycStatus = 'PENDING';
+        user.kycDetails = {
+            aadharNumber: kycDetailsData.aadharNumber || '',
+            aadharFile: kycDetailsData.aadharFile || '',
+            panNumber: kycDetailsData.panNumber || '',
+            panFile: kycDetailsData.panFile || '',
+            otherDocType: kycDetailsData.otherDocType || '',
+            otherDocNumber: kycDetailsData.otherDocNumber || '',
+            otherDocFile: kycDetailsData.otherDocFile || '',
+            submittedAt: new Date()
+        };
+        await user.save();
+
+        return {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            profileImage: user.profileImage || '',
+            kycStatus: user.kycStatus,
+            kycDetails: user.kycDetails
+        };
     }
 }
 

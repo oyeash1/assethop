@@ -32,8 +32,18 @@ const UserSchema = new mongoose.Schema({
     },
     kycStatus: {
         type: String,
-        enum: ['PENDING', 'VERIFIED', 'REJECTED'],
-        default: 'PENDING'
+        enum: ['NOT_SUBMITTED', 'PENDING', 'VERIFIED', 'REJECTED'],
+        default: 'NOT_SUBMITTED'
+    },
+    kycDetails: {
+        aadharNumber: { type: String, default: '' },
+        aadharFile: { type: String, default: '' },
+        panNumber: { type: String, default: '' },
+        panFile: { type: String, default: '' },
+        otherDocType: { type: String, default: '' },
+        otherDocNumber: { type: String, default: '' },
+        otherDocFile: { type: String, default: '' },
+        submittedAt: { type: Date }
     },
     cibilScore: {
         type: Number,

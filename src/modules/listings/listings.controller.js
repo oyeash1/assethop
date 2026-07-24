@@ -1,5 +1,6 @@
 // src/modules/listings/listings.controller.js
 const listingsService = require('./listings.service');
+const User = require('../auth/user.model');
 
 class ListingsController {
 
@@ -7,6 +8,12 @@ class ListingsController {
     async addListing(req, res) {
         try {
             const { title, description, category, mrp, dailyRent, coordinates, hostId, images } = req.body;
+
+            // Enforce KYC verification
+            const hostUser = await User.findById(req.user.id);
+            if (!hostUser || hostUser.kycStatus !== 'VERIFIED') {
+                return res.status(403).json({ status: 'error', message: 'KYC verification is required to list products.' });
+            }
 
             // Validation check (Basic validation, formal validator standalone middleware mein banayenge)
             if (!title || !category || !mrp || !dailyRent || !coordinates || !hostId) {

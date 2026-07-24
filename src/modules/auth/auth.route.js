@@ -9,6 +9,7 @@ router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.put('/profile', authenticateUser, authController.updateProfile);
 router.get('/me', authenticateUser, authController.me);
+router.post('/kyc/submit', authenticateUser, authController.submitKyc);
 router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
 
