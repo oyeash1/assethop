@@ -48,6 +48,10 @@ const ListingSchema = new mongoose.Schema({
             type: [Number], // [longitude, latitude] -> Dhyan dena, MongoDB mein Longitude PEHLE aata hai
             required: true
         }
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

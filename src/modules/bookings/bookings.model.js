@@ -22,15 +22,28 @@ const BookingSchema = new mongoose.Schema({
 
     // Pricing Breakdown Snapshots (From our Deposit Engine)
     pricing: {
-        baseRent: { type: Number, required: true },
-        insurancePremium: { type: Number, required: true },
-        platformFee: { type: Number, required: true },
-        securityDeposit: { type: Number, required: true }
+        baseRent: { type: Number },
+        insurancePremium: { type: Number },
+        platformFee: { type: Number },
+        securityDeposit: { type: Number }
     },
     totals: {
-        userTotalPaid: { type: Number, required: true },
-        hostEarned: { type: Number, required: true }
+        userTotalPaid: { type: Number },
+        hostEarned: { type: Number }
     },
+
+    // New Enterprise Pricing & GST Compliance Fields
+    baseRentalFee: { type: Number, required: true },
+    userPlatformFee: { type: Number, required: true },
+    userGstFee: { type: Number, required: true },
+    hostCommissionFee: { type: Number, required: true },
+    hostGstFee: { type: Number, required: true },
+    hostNetPayout: { type: Number, required: true },
+    refundableDeposit: { type: Number, required: true },
+    totalUserPayable: { type: Number, required: true },
+    totalPlatformProfit: { type: Number, required: true },
+    totalGstLiability: { type: Number, required: true },
+    razorpayTransferId: { type: String, default: null },
 
     // State Machine Flow Control
     status: {

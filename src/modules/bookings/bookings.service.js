@@ -2,7 +2,7 @@
 const Booking = require('./bookings.model');
 const Listing = require('../listings/listings.model');
 const User = require('../auth/user.model');
-const { calculateBookingPricing } = require('../../shared/utils/depositEngine');
+const { calculateEnterpriseBreakdown } = require('../../shared/utils/pricing.utils');
 
 class BookingsService {
 
@@ -25,13 +25,13 @@ class BookingsService {
         const end = new Date(endDate);
         const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) || 1;
 
-        // Triggering our Automatic Deposit Engine Matrix
-        const pricingCalculations = calculateBookingPricing(
-            listing.category,
-            listing.mrp,
+        // Triggering our Enterprise Pricing & GST Engine
+        const pricingCalculations = calculateEnterpriseBreakdown(
             listing.dailyRent,
             durationDays,
-            userCibil
+            userCibil,
+            listing.mrp,
+            listing.category
         );
 
         // Cryptographic Secure OTP generation for physical checkpoints
@@ -44,11 +44,31 @@ class BookingsService {
             hostId: listing.hostId,
             startDate,
             endDate,
-            pricing: pricingCalculations.pricingBreakdown,
-            totals: {
-                userTotalPaid: pricingCalculations.totals.userTotalPayable,
-                hostEarned: pricingCalculations.totals.hostTotalEarned
+
+            // Enterprise pricing fields
+            baseRentalFee: pricingCalculations.baseRentalFee,
+            userPlatformFee: pricingCalculations.userPlatformFee,
+            userGstFee: pricingCalculations.userGstFee,
+            hostCommissionFee: pricingCalculations.hostCommissionFee,
+            hostGstFee: pricingCalculations.hostGstFee,
+            hostNetPayout: pricingCalculations.hostNetPayout,
+            refundableDeposit: pricingCalculations.refundableDeposit,
+            totalUserPayable: pricingCalculations.totalUserPayable,
+            totalPlatformProfit: pricingCalculations.totalPlatformProfit,
+            totalGstLiability: pricingCalculations.totalGstLiability,
+
+            // Backwards compatibility mapping
+            pricing: {
+                baseRent: pricingCalculations.baseRentalFee,
+                insurancePremium: 0,
+                platformFee: pricingCalculations.totalUserPlatformServiceCharge,
+                securityDeposit: pricingCalculations.refundableDeposit
             },
+            totals: {
+                userTotalPaid: pricingCalculations.totalUserPayable,
+                hostEarned: pricingCalculations.hostNetPayout
+            },
+
             handoverOtp: generatedHandoverOtp,
             returnOtp: generatedReturnOtp,
             status: 'PENDING_PAYMENT'
@@ -131,6 +151,25 @@ class BookingsService {
         booking.lateDurationMs = lateDurationMs;
         booking.status = 'COMPLETED';
         await booking.save();
+
+        // Release the Razorpay hold if it exists
+        if (booking.razorpayTransferId && !booking.razorpayTransferId.startsWith('rzp_trf_mock_')) {
+            try {
+                const Razorpay = require('razorpay');
+                const razorpay = new Razorpay({
+                    key_id: process.env.RAZORPAY_KEY_ID,
+                    key_secret: process.env.RAZORPAY_KEY_SECRET,
+                });
+                await razorpay.transfers.edit(booking.razorpayTransferId, {
+                    on_hold: false
+                });
+                console.log(`[Razorpay Route] Released hold for transfer: ${booking.razorpayTransferId}`);
+            } catch (err) {
+                console.error(`[Razorpay Route Error] Failed to release hold for transfer ${booking.razorpayTransferId}:`, err.message);
+            }
+        } else if (booking.razorpayTransferId) {
+            console.log(`[Razorpay Mock Route] Simulating hold release for mock transfer: ${booking.razorpayTransferId}`);
+        }
 
         // Release listed product to be available again
         listing.status = 'AVAILABLE';

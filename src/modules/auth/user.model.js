@@ -49,6 +49,10 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 750 // For our automatic deposit engine calculations
     },
+    cibilTrustScore: {
+        type: Number,
+        default: 700
+    },
     profileImage: {
         type: String,
         default: ''
