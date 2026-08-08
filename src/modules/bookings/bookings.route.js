@@ -8,6 +8,8 @@ const authenticateUser = require('../../middlewares/authenticateUser');
 router.post('/request', authenticateUser, bookingsController.requestRent);
 router.post('/cancel-pending', authenticateUser, bookingsController.cancelPendingBooking);
 router.post('/verify-handover', authenticateUser, bookingsController.confirmHandover);
+router.post('/verify-return', authenticateUser, bookingsController.confirmReturn);
+router.post('/upload-pickup-photos', authenticateUser, bookingsController.uploadPickupPhotos);
 router.get('/my-rentals', authenticateUser, bookingsController.getMyRentals);
 router.get('/host-requests', authenticateUser, bookingsController.getHostRequests);
 

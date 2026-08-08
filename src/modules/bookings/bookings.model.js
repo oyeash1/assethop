@@ -41,7 +41,27 @@ const BookingSchema = new mongoose.Schema({
 
     // Security Gates (Handover Checkpoints)
     handoverOtp: { type: String, required: true },
-    returnOtp: { type: String, required: true }
+    returnOtp: { type: String, required: true },
+
+    // Tracking & Verification Flow (New fields for sequential flow & Late return engine)
+    pickupPhotos: {
+        type: [String],
+        default: []
+    },
+    handoverVerifiedAt: {
+        type: Date
+    },
+    actualReturnDate: {
+        type: Date
+    },
+    lateFeeCharge: {
+        type: Number,
+        default: 0
+    },
+    lateDurationMs: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Booking', BookingSchema);

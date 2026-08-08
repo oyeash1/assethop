@@ -82,6 +82,40 @@ class BookingsController {
             return res.status(500).json({ status: 'error', message: error.message });
         }
     }
+
+    // Endpoint: User uploads live pickup photos at host's shop
+    async uploadPickupPhotos(req, res) {
+        try {
+            const { bookingId, photos } = req.body;
+            const userId = req.user.id; // User security identity
+
+            if (!bookingId || !photos || !Array.isArray(photos) || photos.length === 0) {
+                return res.status(400).json({ status: 'error', message: 'Booking ID and at least one pickup photo are required.' });
+            }
+
+            const result = await bookingsService.savePickupPhotos(bookingId, userId, photos);
+            return res.status(200).json(result);
+        } catch (error) {
+            return res.status(400).json({ status: 'error', message: error.message });
+        }
+    }
+
+    // Endpoint: Host verifies return OTP and triggers late fee calculator
+    async confirmReturn(req, res) {
+        try {
+            const { bookingId, otp } = req.body;
+            const hostId = req.user.id;
+
+            if (!bookingId || !otp) {
+                return res.status(400).json({ status: 'error', message: 'Booking ID and return verification OTP are required.' });
+            }
+
+            const result = await bookingsService.verifyReturn(bookingId, hostId, otp);
+            return res.status(200).json(result);
+        } catch (error) {
+            return res.status(400).json({ status: 'error', message: error.message });
+        }
+    }
 }
 
 module.exports = new BookingsController();

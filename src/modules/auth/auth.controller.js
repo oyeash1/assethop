@@ -192,7 +192,8 @@ class AuthController {
                         role: user.role, 
                         profileImage: user.profileImage || '',
                         kycStatus: user.kycStatus || 'NOT_SUBMITTED',
-                        kycDetails: user.kycDetails || {}
+                        kycDetails: user.kycDetails || {},
+                        payoutDetails: user.payoutDetails || {}
                     }
                 }
             });
@@ -238,7 +239,8 @@ class AuthController {
                         role: user.role,
                         profileImage: user.profileImage || '',
                         kycStatus: user.kycStatus || 'NOT_SUBMITTED',
-                        kycDetails: user.kycDetails || {}
+                        kycDetails: user.kycDetails || {},
+                        payoutDetails: user.payoutDetails || {}
                     }
                 }
             });

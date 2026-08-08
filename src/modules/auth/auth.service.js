@@ -50,7 +50,8 @@ class AuthService {
                 role: user.role, 
                 profileImage: user.profileImage || '',
                 kycStatus: user.kycStatus || 'NOT_SUBMITTED',
-                kycDetails: user.kycDetails || {}
+                kycDetails: user.kycDetails || {},
+                payoutDetails: user.payoutDetails || {}
             },
             accessToken,
             refreshToken
@@ -87,7 +88,8 @@ class AuthService {
                 role: user.role, 
                 profileImage: user.profileImage || '',
                 kycStatus: user.kycStatus || 'NOT_SUBMITTED',
-                kycDetails: user.kycDetails || {}
+                kycDetails: user.kycDetails || {},
+                payoutDetails: user.payoutDetails || {}
             },
             accessToken,
             refreshToken
@@ -109,7 +111,8 @@ class AuthService {
             role: user.role, 
             profileImage: user.profileImage || '',
             kycStatus: user.kycStatus || 'NOT_SUBMITTED',
-            kycDetails: user.kycDetails || {}
+            kycDetails: user.kycDetails || {},
+            payoutDetails: user.payoutDetails || {}
         };
     }
 
@@ -138,7 +141,8 @@ class AuthService {
             role: user.role,
             profileImage: user.profileImage || '',
             kycStatus: user.kycStatus,
-            kycDetails: user.kycDetails
+            kycDetails: user.kycDetails,
+            payoutDetails: user.payoutDetails || {}
         };
     }
 }

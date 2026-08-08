@@ -15,6 +15,14 @@ class ListingsController {
                 return res.status(403).json({ status: 'error', message: 'KYC verification is required to list products.' });
             }
 
+            // Enforce Payout details configuration
+            if (!hostUser.payoutDetails || !hostUser.payoutDetails.isPayoutConfigured) {
+                return res.status(403).json({ 
+                    status: 'error', 
+                    message: 'Please configure your Payout Details in Profile Settings to receive rental earnings.' 
+                });
+            }
+
             // Validation check (Basic validation, formal validator standalone middleware mein banayenge)
             if (!title || !category || !mrp || !dailyRent || !coordinates || !hostId) {
                 return res.status(400).json({ status: 'error', message: 'Missing required product fields.' });

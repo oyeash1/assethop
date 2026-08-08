@@ -52,6 +52,14 @@ const UserSchema = new mongoose.Schema({
     profileImage: {
         type: String,
         default: ''
+    },
+    payoutDetails: {
+        accountHolderName: { type: String, default: '' },
+        accountNumber: { type: String, default: '' },
+        ifscCode: { type: String, default: '' },
+        upiId: { type: String, default: '' },
+        razorpayAccountId: { type: String, default: null },
+        isPayoutConfigured: { type: Boolean, default: false }
     }
 }, { timestamps: true });
 

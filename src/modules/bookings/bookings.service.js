@@ -67,16 +67,85 @@ class BookingsService {
         if (!booking) throw new Error('Booking contract not found.');
         if (booking.hostId.toString() !== hostId) throw new Error('Unauthorized host verification.');
         if (booking.status !== 'REQUESTED') throw new Error('Invalid transition state.');
+        
+        // Sequential validation check: Ensure photos are uploaded before handover OTP can be verified
+        if (!booking.pickupPhotos || booking.pickupPhotos.length === 0) {
+            throw new Error('Cannot verify handover. Renter must capture and upload pickup photos first.');
+        }
+
         if (booking.handoverOtp !== enteredOtp) throw new Error('Invalid Handover OTP protection code.');
 
         // Update status to ACTIVE (Asset officially hops to User)
         booking.status = 'ACTIVE';
+        booking.handoverVerifiedAt = new Date();
         await booking.save();
 
         // Toggle asset state to RENTED globally
         await Listing.findByIdAndUpdate(booking.listingId, { status: 'RENTED' });
 
         return { status: 'success', message: 'AssetHop Handover Verified. Trip is now ACTIVE!' };
+    }
+
+    // 2.5 Save Renter's Pickup Photos at shop
+    async savePickupPhotos(bookingId, userId, photos) {
+        const booking = await Booking.findOne({ _id: bookingId, userId });
+        if (!booking) throw new Error('Booking contract not found or unauthorized.');
+        if (booking.status !== 'REQUESTED') throw new Error('Cannot upload pickup photos. Invalid booking state.');
+
+        booking.pickupPhotos = photos || [];
+        await booking.save();
+
+        return { status: 'success', message: 'Pickup photos saved successfully.' };
+    }
+
+    // 2.6 Physical Return Verification OTP Service & Late Fee Calculation
+    async verifyReturn(bookingId, hostId, enteredOtp) {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) throw new Error('Booking contract not found.');
+        if (booking.hostId.toString() !== hostId) throw new Error('Unauthorized host verification.');
+        if (booking.status !== 'ACTIVE') throw new Error('Cannot verify return. Rental trip is not active.');
+        if (booking.returnOtp !== enteredOtp) throw new Error('Invalid Return OTP protection code.');
+
+        const listing = await Listing.findById(booking.listingId);
+        if (!listing) throw new Error('Associated listing not found.');
+
+        const now = new Date();
+        const allowedDurationMs = booking.endDate - booking.startDate;
+        const actualDurationMs = now - booking.handoverVerifiedAt;
+        const overdueMs = actualDurationMs - allowedDurationMs;
+
+        let lateFee = 0;
+        let lateDurationMs = 0;
+
+        if (overdueMs > 0) {
+            lateDurationMs = overdueMs;
+            const hoursExceeded = Math.ceil(overdueMs / (1000 * 60 * 60)); // Round up hours
+            const hourlyRent = listing.dailyRent / 24;
+            const lateFeeRatePerHour = hourlyRent * 1.5; // 1.5x penalty rate
+            lateFee = Math.ceil(hoursExceeded * lateFeeRatePerHour);
+        }
+
+        // Set returned state parameters
+        booking.actualReturnDate = now;
+        booking.lateFeeCharge = lateFee;
+        booking.lateDurationMs = lateDurationMs;
+        booking.status = 'COMPLETED';
+        await booking.save();
+
+        // Release listed product to be available again
+        listing.status = 'AVAILABLE';
+        await listing.save();
+
+        return {
+            status: 'success',
+            message: 'AssetHop Return Verified. Trip is now COMPLETED!',
+            data: {
+                actualReturnDate: booking.actualReturnDate,
+                lateFeeCharge: booking.lateFeeCharge,
+                lateDurationMs: booking.lateDurationMs,
+                status: booking.status
+            }
+        };
     }
 
     // 3. Find rentals requested by user

@@ -1,4 +1,4 @@
-// src/server.js
+// src/server.js (env updated)
 const http = require('http');
 const app = require('./app');
 const connectDB = require('./config/db.js');
